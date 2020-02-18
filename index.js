@@ -5,28 +5,28 @@ var Service, Characteristic;
 const DEF_MIN_LUX = 0,
       DEF_MAX_LUX = 10000;
 
-var inverter_ip = ''
 const PLUGIN_NAME   = 'homebridge-fronius-inverter';
 const ACCESSORY_NAME = 'FroniusInverter';
 
 module.exports = function(homebridge) {
     Service = homebridge.hap.Service;
     Characteristic = homebridge.hap.Characteristic;
-    homebridge.registerAccessory('homebridge-fronius-inverter', 'FroniusInverter', FroniusInverter);
+    homebridge.registerAccessory(PLUGIN_NAME, ACCESSORY_NAME, FroniusInverter);
 }
 
 // main api request with all data
-const getInverterData = async() => {
+const getInverterData = async(ip) => {
 	try {
-	    return await axios.get(inverter_ip+'/solar_api/v1/GetPowerFlowRealtimeData.fcgi')
+	    return await axios.get('http://'+ip+'/solar_api/v1/GetPowerFlowRealtimeData.fcgi')
 	} catch (error) {
 	    console.error(error)
 	}
 }
 
 // live power consumption
-const getCurrentConsumption = async () => {
-	const currentConsumption = await getInverterData()
+const getCurrentConsumption = async (ip) => {
+
+	const currentConsumption = await getInverterData(ip)
 
 	if(currentConsumption.data.Body.Data.Site.P_Load == null) {
 		return 0
@@ -41,13 +41,22 @@ class FroniusInverter {
     	this.config = config
 
     	this.service = new Service.LightSensor(this.config.name)
+
+    	this.name = config["name"];
+    	this.manufacturer = config["manufacturer"] || "Fronius";
+	    this.model = config["model"] || "Inverter";
+	    this.serial = config["serial"] || "fronius-inverter-1";
+	    this.ip = config["ip"];
+	    this.inverter_data = config["inverter_data"];
+	    this.minLux = config["min_lux"] || DEF_MIN_LUX;
+    	this.maxLux = config["max_lux"] || DEF_MAX_LUX;
     }
 
     getServices () {
     	const informationService = new Service.AccessoryInformation()
-        .setCharacteristic(Characteristic.Manufacturer, 'Fronius')
-        .setCharacteristic(Characteristic.Model, 'Inverter')
-        .setCharacteristic(Characteristic.SerialNumber, 'fronius-inverter-1')
+        .setCharacteristic(Characteristic.Manufacturer, this.manufacturer)
+        .setCharacteristic(Characteristic.Model, this.model)
+        .setCharacteristic(Characteristic.SerialNumber, this.serial)
 
         this.service.getCharacteristic(Characteristic.CurrentAmbientLightLevel)
 	      .on('get', this.getOnCharacteristicHandler.bind(this))
@@ -56,24 +65,10 @@ class FroniusInverter {
     }
 
     async getOnCharacteristicHandler (callback) {
-	    /*
-	     * this is called when HomeKit wants to retrieve the current state of the characteristic as defined in our getServices() function
-	     * it's called each time you open the Home app or when you open control center
-	     */
+	    const consumption = await getCurrentConsumption(this.ip)
 
-	    const consumption = await getCurrentConsumption()
+	    this.log(`calling getOnCharacteristicHandler`, await getCurrentConsumption(this.ip))
 
-	    /* Log to the console the value whenever this function is called */
-	    this.log(`calling getOnCharacteristicHandler`, await getCurrentConsumption())
-
-	    // console.log('Current Consumption: '+ getCurrentConsumption())
-
-	    /*
-	     * The callback function should be called to return the value
-	     * The first argument in the function should be null unless and error occured
-	     * The second argument in the function should be the current value of the characteristic
-	     * This is just an example so we will return the value from `this.isOn` which is where we stored the value in the set handler
-	     */
-	    callback(null, await getCurrentConsumption())
+	    callback(null, await getCurrentConsumption(this.ip))
 	}
 }
