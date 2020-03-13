@@ -14,7 +14,7 @@ module.exports = function(homebridge) {
     homebridge.registerAccessory(PLUGIN_NAME, ACCESSORY_NAME, FroniusInverter);
 }
 
-// main api request with all data
+// Main API request with all data
 const getInverterData = async(ip) => {
 	try {
 	    return await axios.get('http://'+ip+'/solar_api/v1/GetPowerFlowRealtimeData.fcgi')
@@ -24,14 +24,21 @@ const getInverterData = async(ip) => {
 }
 
 // live power consumption
-const getCurrentConsumption = async (ip) => {
+const getCurrentConsumption = async (ip, inverter_data) => {
 
+	// To Do: Need to handle if no connection
 	const currentConsumption = await getInverterData(ip)
 
-	if(currentConsumption.data.Body.Data.Site.P_Load == null) {
-		return 0
+	if(currentConsumption) {
+		if (currentConsumption.data.Body.Data.Site[inverter_data] == null) {
+			return 0
+		} else {
+			// Return positive value
+			return Math.abs(Math.round(currentConsumption.data.Body.Data.Site[inverter_data], 1))
+		}
 	} else {
-		return Math.abs(Math.round(currentConsumption.data.Body.Data.Site.P_Load, 1))
+		// No response currentConsumption return 0
+		return 0
 	}
 }
 
@@ -65,10 +72,8 @@ class FroniusInverter {
     }
 
     async getOnCharacteristicHandler (callback) {
-	    const consumption = await getCurrentConsumption(this.ip)
+	    // this.log(`calling getOnCharacteristicHandler`, await getCurrentConsumption(this.ip, this.inverter_data))
 
-	    this.log(`calling getOnCharacteristicHandler`, await getCurrentConsumption(this.ip))
-
-	    callback(null, await getCurrentConsumption(this.ip))
+	    callback(null, await getCurrentConsumption(this.ip, this.inverter_data))
 	}
 }
