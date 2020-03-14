@@ -14,30 +14,40 @@ module.exports = function(homebridge) {
     homebridge.registerAccessory(PLUGIN_NAME, ACCESSORY_NAME, FroniusInverter);
 }
 
-// Main API request with all data
-const getInverterData = async(ip) => {
+/**
+ * Main API request with all data
+ *
+ * @param {inverterIp} the IP of the inver to be queried
+ */
+const getInverterData = async(inverterIp) => {
 	try {
-	    return await axios.get('http://'+ip+'/solar_api/v1/GetPowerFlowRealtimeData.fcgi')
+	    return await axios.get('http://'+inverterIp+'/solar_api/v1/GetPowerFlowRealtimeData.fcgi')
 	} catch (error) {
 	    console.error(error)
 	}
 }
 
-// live power consumption
-const getCurrentConsumption = async (ip, inverter_data) => {
+/**
+ * Gets and returns the accessory's value in the correct format.
+ *
+ * @param {inverterIp} the IP of the inver to be queried by getInverterData
+ * @param {inverterDataValue} the JSON key queried with the return value
+ * @return {bool} the value for the accessory
+ */
+const getAccessoryValue = async (inverterIp, inverterDataValue) => {
 
 	// To Do: Need to handle if no connection
-	const currentConsumption = await getInverterData(ip)
+	const inverterData = await getInverterData(inverterIp)
 
-	if(currentConsumption) {
-		if (currentConsumption.data.Body.Data.Site[inverter_data] == null) {
+	if(inverterData) {
+		if (inverterData.data.Body.Data.Site[inverterDataValue] == null) {
 			return 0
 		} else {
 			// Return positive value
-			return Math.abs(Math.round(currentConsumption.data.Body.Data.Site[inverter_data], 1))
+			return Math.abs(Math.round(inverterData.data.Body.Data.Site[inverterDataValue], 1))
 		}
 	} else {
-		// No response currentConsumption return 0
+		// No response inverterData return 0
 		return 0
 	}
 }
@@ -72,8 +82,8 @@ class FroniusInverter {
     }
 
     async getOnCharacteristicHandler (callback) {
-	    // this.log(`calling getOnCharacteristicHandler`, await getCurrentConsumption(this.ip, this.inverter_data))
+	    // this.log(`calling getOnCharacteristicHandler`, await getAccessoryValue(this.ip, this.inverter_data))
 
-	    callback(null, await getCurrentConsumption(this.ip, this.inverter_data))
+	    callback(null, await getAccessoryValue(this.ip, this.inverter_data))
 	}
 }
