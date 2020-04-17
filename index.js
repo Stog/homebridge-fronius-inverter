@@ -1,4 +1,5 @@
 const axios = require('axios');
+const setupCache = require('axios-cache-adapter').setupCache;
 
 var Service, Characteristic;
 
@@ -15,13 +16,24 @@ module.exports = function(homebridge) {
 }
 
 /**
+ * Setup Cache For Axios to prevent additional requests
+ */
+const cache = setupCache({
+  maxAge: 5 * 1000 //in ms
+})
+
+const api = axios.create({
+  adapter: cache.adapter
+})
+
+/**
  * Main API request with all data
  *
  * @param {inverterIp} the IP of the inver to be queried
  */
 const getInverterData = async(inverterIp) => {
 	try {
-	    return await axios.get('http://'+inverterIp+'/solar_api/v1/GetPowerFlowRealtimeData.fcgi')
+	    return await api.get('http://'+inverterIp+'/solar_api/v1/GetPowerFlowRealtimeData.fcgi')
 	} catch (error) {
 	    console.error(error)
 	}
@@ -82,7 +94,7 @@ class FroniusInverter {
     }
 
     async getOnCharacteristicHandler (callback) {
-	    // this.log(`calling getOnCharacteristicHandler`, await getAccessoryValue(this.ip, this.inverter_data))
+	    this.log(`calling getOnCharacteristicHandler`, await getAccessoryValue(this.ip, this.inverter_data))
 
 	    callback(null, await getAccessoryValue(this.ip, this.inverter_data))
 	}

@@ -24,7 +24,8 @@ The following data can also be returned but is not fully supported at this time:
 * **E_Day** - Energy generated in watt-hours for the current year
 * **E_Year** - Energy generated in watt-hours for the current year
 * **E_Total** - Total energy generated in watt-hours
-* **P_Akku** - Battery charge or discharge state. 
+* **P_Akku** - Battery charge or discharge state
+* **rel_SelfConsumption** - Live percentage of P_PV energy being consumed
 
 ```
 "accessories": [
