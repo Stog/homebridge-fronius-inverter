@@ -97,8 +97,10 @@ class FroniusInverter {
     }
 
     async getCurrentAmbientLightLevelHandler (callback) {
-	    this.log(`calling getCurrentAmbientLightLevelcHandler`, await getAccessoryValue(this.ip, this.inverter_data))
+		let getValue = await getAccessoryValue(this.ip, this.inverter_data)
 
-	    callback(null, await getAccessoryValue(this.ip, this.inverter_data))
+		this.log(`calling getCurrentAmbientLightLevelcHandler`, getValue)
+
+	    callback(null, getValue)
 	}
 }
