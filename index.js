@@ -23,7 +23,8 @@ const cache = setupCache({
 })
 
 const api = axios.create({
-  adapter: cache.adapter
+  adapter: cache.adapter,
+  timeout: 2000
 })
 
 /**
@@ -35,7 +36,8 @@ const getInverterData = async(inverterIp) => {
 	try {
 	    return await api.get('http://'+inverterIp+'/solar_api/v1/GetPowerFlowRealtimeData.fcgi')
 	} catch (error) {
-	    console.error(error)
+	    console.error(error);
+	    return null;
 	}
 }
 
