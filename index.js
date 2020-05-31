@@ -88,7 +88,10 @@ class FroniusInverter {
         .setCharacteristic(Characteristic.SerialNumber, this.serial)
 
         this.service.getCharacteristic(Characteristic.CurrentAmbientLightLevel)
-	      .on('get', this.getOnCharacteristicHandler.bind(this))
+		  .on('get', this.getOnCharacteristicHandler.bind(this))
+		  .setProps({
+			minValue: this.minLux
+		  });
 
 	    return [informationService, this.service]
     }
