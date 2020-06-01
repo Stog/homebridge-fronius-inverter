@@ -88,14 +88,19 @@ class FroniusInverter {
         .setCharacteristic(Characteristic.SerialNumber, this.serial)
 
         this.service.getCharacteristic(Characteristic.CurrentAmbientLightLevel)
-	      .on('get', this.getOnCharacteristicHandler.bind(this))
+		  .on('get', this.getCurrentAmbientLightLevelHandler.bind(this))
+		  .setProps({
+			minValue: this.minLux
+		  });
 
 	    return [informationService, this.service]
     }
 
-    async getOnCharacteristicHandler (callback) {
-	    this.log(`calling getOnCharacteristicHandler`, await getAccessoryValue(this.ip, this.inverter_data))
+    async getCurrentAmbientLightLevelHandler (callback) {
+		let getValue = await getAccessoryValue(this.ip, this.inverter_data)
 
-	    callback(null, await getAccessoryValue(this.ip, this.inverter_data))
+		this.log(`calling getCurrentAmbientLightLevelcHandler`, getValue)
+
+	    callback(null, getValue)
 	}
 }
